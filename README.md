@@ -2,7 +2,7 @@ This is my submission for Yanport's Technical Test
 
 Instructions:
 
-1. Please clone the repo from github: git@github.com:kmiguel10/vacuum-technical-test.git
+1. Please clone the repo from github: https://github.com/kmiguel10/vacuum-technical-test
 2. npm install
 3. npm run test
 
