@@ -7,8 +7,12 @@ type Position = {
   orientation: string;
 };
 
+////////////////////////////////////
+//           Enums               //
+////////////////////////////////////
+
 enum Orientation {
-  N = "N", // north
+  N = "N", //= "north"
   E = "E", //= "east",
   W = "W", //= "west",
   S = "S", //= "south"
@@ -31,11 +35,6 @@ export class Vacuum {
   public isInitialized!: boolean;
   public instructions: string[] = [];
 
-  //ENUMS
-
-  //structs from position
-  //constructor
-  //Need to initialize the grid/matrix
   ////////////////////////////////////
   //           Constructor          //
   ////////////////////////////////////
@@ -45,8 +44,6 @@ export class Vacuum {
     this.gridYValue = y;
 
     this.isInitialized = false;
-
-    //this.initializePosition(0, 0, "N");
   }
 
   ////////////////////////////////////
@@ -55,7 +52,6 @@ export class Vacuum {
 
   /**
    * NOTES:
-   * 1. Would this fail if called without initializing class? YES
    * 2. cannot be reinitailized
    * 3. Typescript does not have a primitive char type
    * 4. Based on the instructions, the lower most left is 0,0 so no negative area
@@ -73,7 +69,7 @@ export class Vacuum {
     //Initial out of bounds check
     this.isOutOfBounds(initXPos, initYPos);
 
-    //Check Orientation param
+    //Check Orientation params
     if (initOrientation in Orientation) {
       if (!this.isInitialized) {
         //Numbers must not be less than zero
@@ -101,7 +97,6 @@ export class Vacuum {
         throw new TypeError("Position is already initialized");
       }
     } else {
-      //May need to evaluate each params for better error
       throw new TypeError("Invalid Orientation");
     }
   }
@@ -115,13 +110,7 @@ export class Vacuum {
    */
   public setNewPosition(instructions: string): Position {
     //Param Checks:
-    //Parse instructions put in array
-    //Must only accept ACCEPTED combination of letters
-    //can only set a new position once initialized
     this.checkInstructionsValid(instructions);
-    //Do something here to calculate new position
-    //calculate new position
-    //this.currentPosition = //
     this.calculateNewPosition();
 
     return this.currentPosition;
@@ -143,9 +132,6 @@ export class Vacuum {
     ) {
       throw new TypeError("Given positions are out of bounds");
     }
-    // return initXPos > this.gridXValue || initYPos > this.gridYValue
-    //   ? true
-    //   : false;
   }
 
   /**
@@ -182,10 +168,7 @@ export class Vacuum {
    */
   private calculateNewPosition() {
     if (this.instructions.length != 0) {
-      //traverse array
       let currPosition: Position = this.currentPosition;
-
-      console.log("Before", this.currentPosition);
 
       for (let i = 0; i < this.instructions.length; i++) {
         let currCommand = this.instructions[i];
@@ -193,39 +176,21 @@ export class Vacuum {
         console.log("- - -Command- - -", currCommand);
 
         if (currCommand == Commands.A) {
-          //console.log("ENTERED A branch");
           let afterMovePos: Position;
           afterMovePos = this.moveForward(currPosition);
 
           currPosition.x = afterMovePos.x;
           currPosition.y = afterMovePos.y;
           currPosition.orientation = afterMovePos.orientation;
-          // console.log("afterMovePos", afterMovePos);
-          // console.log("currPosition", currPosition);
-          //currPosition.x = this.moveForward(currPosition).x;
         } else if (currCommand == Commands.D) {
-          //console.log("ENTERED D branch");
-          //rotate 90 degrees to the right
-          //change orientation to either x or y, either pointing N,E,W,S
           let newOrientation = this.changeOrientationRight(
             currPosition.orientation
           );
           currPosition.orientation = newOrientation;
-          console.log("current orientation changed to: ", newOrientation);
         } else {
-          //currCommand == Commands.G;
-          // console.log("ENTERED G branch");
-
-          //rotate 90 degrees to the left
-          //change orientation to either x or y, either pointing N,E,W,S
           currPosition.orientation = this.changeOrientationLeft(
             currPosition.orientation
           );
-
-          // console.log(
-          //   "current orientation changed to: ",
-          //   currPosition.orientation
-          // );
         }
       }
       console.log("newPosition after instruction", currPosition);
@@ -235,13 +200,14 @@ export class Vacuum {
   }
 
   /**
+   * Changes orientation 90 to the right
    *
    * @param currOrientation
-   * @returns
+   * @returns newOrientation
    */
   private changeOrientationRight(currOrientation: string): string {
     let newOrientation = currOrientation;
-    console.log("changeOrientationRight from ", currOrientation);
+    console.log("Orientation changed right from", currOrientation);
 
     if (currOrientation === Orientation.N) {
       newOrientation = Orientation.E;
@@ -253,12 +219,19 @@ export class Vacuum {
       //if west
       newOrientation = Orientation.N;
     }
-    console.log("changeOrientationRight to", newOrientation);
+    console.log("Orientation changed right to", newOrientation);
 
     return newOrientation;
   }
 
+  /**
+   *Changes orientation 90 to the left
+   *
+   * @param currOrientation
+   * @returns currOrientation
+   */
   private changeOrientationLeft(currOrientation: string): string {
+    console.log("Orientation changed left from: ", currOrientation);
     if (currOrientation === Orientation.N) {
       currOrientation = Orientation.W;
     } else if (currOrientation === Orientation.W) {
@@ -269,23 +242,48 @@ export class Vacuum {
       //if east
       currOrientation = Orientation.N;
     }
+    console.log("Orientation changed left to: ", currOrientation);
     return currOrientation;
   }
 
-  //This will depend of the orientation & current position
-  //If at the boundary/wall change orientation
+  /**
+   * This will depend of the orientation & current position
+   * If at the boundary/wall change orientation
+   *
+   * NOTE: I made the decision for the vacuum to persist on turning right until it finds a viable path
+   *
+   * @param currPos
+   * @returns
+   */
   private moveForward(currPos: Position): Position {
-    //If hit a wall/boundary then keep turning right until there is a path
-    //...other option is to throw an error
+    console.log("Move one forward, from: ", currPos);
 
-    //Evaluate if the current position is at the boundary
-    //corners
-    //if at a boundary
-    if (currPos.x == this.gridXValue || currPos.x == 0) {
+    //Evaluate if the current position is at the boundary or corners
+    //if at a boundary then change orientation to the right
+    //will keep rotating right if keeps on going to hit the wall
+    while (
+      (currPos.orientation === Orientation.N && currPos.y == this.gridYValue) ||
+      (currPos.orientation === Orientation.S && currPos.y == 0) ||
+      (currPos.orientation === Orientation.E && currPos.x == this.gridXValue) ||
+      (currPos.orientation === Orientation.W && currPos.x == 0)
+    ) {
       //change orientation
+      console.log(
+        "Hit boundary, orientation changed from: ",
+        currPos.orientation
+      );
+      currPos.orientation = this.changeOrientationRight(currPos.orientation);
+      console.log(
+        "Hit boundary, orientation changed to: ",
+        currPos.orientation
+      );
     }
 
     if (currPos.orientation === Orientation.N) {
+      //check if at boundary
+      if (currPos.y == this.gridYValue) {
+        //change orientation
+      }
       // console.log("N");
       currPos.y += 1;
     } else if (currPos.orientation === Orientation.E) {
@@ -299,7 +297,7 @@ export class Vacuum {
       //W
       currPos.x -= 1;
     }
-
+    console.log("Move one forward, to ", currPos);
     return currPos;
   }
 
@@ -313,15 +311,5 @@ export class Vacuum {
    * corners
    * [0,0] , [max,max] , [0,max], [max,0]
    *
-   * @param currPos
-   * @returns
    */
-  calculatePosition(currPos: number): number {
-    let futurePosition = currPos + 1;
-
-    //at boundary
-    if (currPos == this.gridXValue || currPos == 0) {
-    }
-    return currPos;
-  }
 }
